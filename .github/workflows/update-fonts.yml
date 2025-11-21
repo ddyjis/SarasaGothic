@@ -20,8 +20,12 @@ jobs:
           VERSION=$(echo "$RELEASE_INFO" | jq -r '.tag_name')
           DOWNLOAD_URL=$(echo "$RELEASE_INFO" | jq -r '.assets[] | select(.name | contains("SarasaTermSlabHC-TTF")) | .browser_download_url')
           
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "download_url=$DOWNLOAD_URL" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$VERSION"
+            echo "download_url<<EOF"
+            echo "$DOWNLOAD_URL"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
           echo "Found version: $VERSION"
           echo "Download URL: $DOWNLOAD_URL"
       
