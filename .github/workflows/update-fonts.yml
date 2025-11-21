@@ -20,21 +20,20 @@ jobs:
           VERSION=$(echo "$RELEASE_INFO" | jq -r '.tag_name')
           DOWNLOAD_URL=$(echo "$RELEASE_INFO" | jq -r '.assets[] | select(.name | contains("SarasaTermSlabHC-TTF")) | .browser_download_url')
           
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "download_url=$DOWNLOAD_URL" >> "$GITHUB_OUTPUT"
           echo "Found version: $VERSION"
           echo "Download URL: $DOWNLOAD_URL"
       
       - name: Download and extract fonts
         run: |
-          wget -O fonts.zip "${{ steps.release.outputs.download_url }}"
-          unzip -j fonts.zip \
+          wget -O fonts.7z "${{ steps.release.outputs.download_url }}"
+          7z x fonts.7z \
             "SarasaTermSlabHC-Bold.ttf" \
             "SarasaTermSlabHC-BoldItalic.ttf" \
             "SarasaTermSlabHC-Italic.ttf" \
-            "SarasaTermSlabHC-Regular.ttf" \
-            -d .
-          rm fonts.zip
+            "SarasaTermSlabHC-Regular.ttf"
+          rm fonts.7z
       
       - name: Check for changes
         id: changes
