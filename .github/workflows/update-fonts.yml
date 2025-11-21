@@ -1,0 +1,59 @@
+name: Update Sarasa Fonts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-fonts:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info
+        id: release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/be5invis/Sarasa-Gothic/releases/latest)
+          VERSION=$(echo "$RELEASE_INFO" | jq -r '.tag_name')
+          DOWNLOAD_URL=$(echo "$RELEASE_INFO" | jq -r '.assets[] | select(.name | contains("SarasaTermSlabHC-TTF")) | .browser_download_url')
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
+          echo "Found version: $VERSION"
+          echo "Download URL: $DOWNLOAD_URL"
+      
+      - name: Download and extract fonts
+        run: |
+          wget -O fonts.zip "${{ steps.release.outputs.download_url }}"
+          unzip -j fonts.zip \
+            "SarasaTermSlabHC-Bold.ttf" \
+            "SarasaTermSlabHC-BoldItalic.ttf" \
+            "SarasaTermSlabHC-Italic.ttf" \
+            "SarasaTermSlabHC-Regular.ttf" \
+            -d .
+          rm fonts.zip
+      
+      - name: Check for changes
+        id: changes
+        run: |
+          git add *.ttf
+          if git diff --staged --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No font changes detected"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Font changes detected"
+          fi
+      
+      - name: Commit and tag
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update Sarasa fonts to ${{ steps.release.outputs.version }}"
+          git tag -a "${{ steps.release.outputs.version }}" -m "Sarasa Gothic ${{ steps.release.outputs.version }}"
+          git push origin main
+          git push origin "${{ steps.release.outputs.version }}"
